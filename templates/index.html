@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1, h2 { color: #333; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        button { cursor: pointer; padding: 5px 10px; }
+        input { padding: 5px; margin-right: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Leaderboard</h1>
+
+    <h2>Top 10 Players</h2>
+    <table id="leaderboard">
+        <tr>
+            <th>Rank</th>
+            <th>Player ID</th>
+            <th>MMR</th>
+        </tr>
+    </table>
+
+    <h2>Update MMR</h2>
+    <input type="number" id="userId" placeholder="User ID">
+    <input type="number" id="mmrChange" placeholder="MMR Change">
+    <button onclick="updateMMR()">Update MMR</button>
+
+    <h2>Get User Rank</h2>
+    <input type="number" id="rankUserId" placeholder="User ID">
+    <button onclick="getUserRank()">Get Rank</button>
+    <p id="userRank"></p>
+
+    <script>
+        function loadLeaderboard() {
+            axios.get('/v1/leaderboard')
+                .then(function (response) {
+                    const leaderboard = document.getElementById('leaderboard');
+                    leaderboard.innerHTML = '<tr><th>Rank</th><th>Player ID</th><th>MMR</th></tr>';
+                    response.data.forEach(user => {
+                        leaderboard.innerHTML += `<tr><td>${user.rank}</td><td>${user.id}</td><td>${user.mmr}</td></tr>`;
+                    });
+                })
+                .catch(function (error) {
+                    console.error('Error loading leaderboard:', error);
+                });
+        }
+
+        function updateMMR() {
+            const userId = document.getElementById('userId').value;
+            const mmrChange = document.getElementById('mmrChange').value;
+            axios.post('/v1/mmr/update', {
+                id: parseInt(userId),
+                mmr_change: parseInt(mmrChange)
+            })
+            .then(function (response) {
+                alert('MMR updated successfully');
+                loadLeaderboard();
+            })
+            .catch(function (error) {
+                console.error('Error updating MMR:', error);
+                alert('Error updating MMR');
+            });
+        }
+
+        function getUserRank() {
+            const userId = document.getElementById('rankUserId').value;
+            axios.get(`/v1/rank/${userId}`)
+                .then(function (response) {
+                    document.getElementById('userRank').innerText = `User ${userId} Rank: ${response.data.rank}, MMR: ${response.data.mmr}`;
+                })
+                .catch(function (error) {
+                    console.error('Error getting user rank:', error);
+                    document.getElementById('userRank').innerText = 'User not found';
+                });
+        }
+
+        loadLeaderboard();
+    </script>
+</body>
+</html>
